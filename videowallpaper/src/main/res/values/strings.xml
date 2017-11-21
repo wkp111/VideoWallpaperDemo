@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">VideoWallpaper</string>
+    <string name="author">wkp</string>
+    <string name="description">动态视频桌面</string>
+    <string name="service_name">视频桌面</string>
+</resources>
