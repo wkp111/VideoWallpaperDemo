@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
                                     if (!TextUtils.isEmpty(name)) {
                                         String fuxName = videoInfo.displayName.substring(videoInfo.displayName.indexOf("."));
                                         String displayName = name + fuxName;
-                                        String filePath = videoInfo.filePath.substring(0, videoInfo.filePath.lastIndexOf("/") + 1) + videoInfo.displayName;
+                                        String filePath = videoInfo.filePath.substring(0, videoInfo.filePath.lastIndexOf("/") + 1) + displayName;
                                         File dest = new File(filePath);
                                         boolean renameTo = videoInfo.file.renameTo(dest);
                                         if (renameTo) {
