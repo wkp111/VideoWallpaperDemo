@@ -10,7 +10,6 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.service.wallpaper.WallpaperService;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.widget.Toast;
 
@@ -21,12 +20,20 @@ import java.io.File;
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class VideoWallpaper extends WallpaperService {
-    public static final String ACTION_VIDEO_ENGINE = "com.wkp.video";
-    public static final String EXTRA_FILE = "extra_file";
-    public static final String EXTRA_VOLUME = "extra_volume";
+    public static final String ACTION_VIDEO_REQUEST = "com.wkp.video.request";      //服务接收数据的广播action
+    public static final String ACTION_VIDEO_RESPONSE = "com.wkp.video.response";    //服务发送数据的广播action
+    public static final String EXTRA_FILE = "extra_file";                           //服务接收/发送数据的广播key
+    public static final String EXTRA_VOLUME = "extra_volume";                       //服务接收数据的广播key
+    public static final String EXTRA_TOAST = "extra_toast";                         //服务接收数据的广播key
+    public static final String EXTRA_RESPONSE = "extra_response";                   //服务发送数据的广播key
+    public static final int RESP_SUCCESS = 100;                                     //桌面设置成功
+    public static final int RESP_FAILED_NULL = 101;                                 //视频文件为空
+    public static final int RESP_FAILED_ERROR = 102;                                //视频播放异常
+    public static final int RESP_FAILED_INIT = 103;                                 //引擎无播放控件
     private VideoEngine mVideoEngine;
     private File mFile;
     private boolean mIsVolume;
+    private boolean mIsToast;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -48,6 +55,7 @@ public class VideoWallpaper extends WallpaperService {
 
     /**
      * 创建引擎
+     *
      * @return
      */
     @Override
@@ -78,14 +86,32 @@ public class VideoWallpaper extends WallpaperService {
                 if (intent != null) {
                     mFile = (File) intent.getSerializableExtra(EXTRA_FILE);
                     mIsVolume = intent.getBooleanExtra(EXTRA_VOLUME, false);
+                    mIsToast = intent.getBooleanExtra(EXTRA_TOAST, false);
                     if (mFile != null) {
                         startVideo(mFile, mIsVolume);
-                    }else {
-                        Toast.makeText(VideoWallpaper.this, "文件为空", Toast.LENGTH_SHORT).show();
+                    } else {
+                        sendResp(EXTRA_RESPONSE, RESP_FAILED_NULL);
+                        if (mIsToast) {
+                            Toast.makeText(VideoWallpaper.this, "文件为空", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             }
         };
+
+        /**
+         * 发送响应广播
+         *
+         * @param key
+         * @param value
+         */
+        private void sendResp(String key, int value) {
+            Intent respIntent = new Intent();
+            respIntent.setAction(ACTION_VIDEO_RESPONSE);
+            respIntent.putExtra(key, value);
+            respIntent.putExtra(EXTRA_FILE, mFile);
+            sendBroadcast(respIntent);
+        }
 
         /**
          * 开始播放视频
@@ -104,7 +130,10 @@ public class VideoWallpaper extends WallpaperService {
                     mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                         @Override
                         public void onPrepared(MediaPlayer mp) {
-                            Toast.makeText(VideoWallpaper.this, "桌面设置成功", Toast.LENGTH_SHORT).show();
+                            sendResp(EXTRA_RESPONSE, RESP_SUCCESS);
+                            if (mIsToast) {
+                                Toast.makeText(VideoWallpaper.this, "桌面设置成功", Toast.LENGTH_SHORT).show();
+                            }
                             mp.start();
                         }
                     });
@@ -114,10 +143,16 @@ public class VideoWallpaper extends WallpaperService {
                     mPlayer.prepareAsync();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(VideoWallpaper.this, "无法播放该文件", Toast.LENGTH_SHORT).show();
+                    sendResp(EXTRA_RESPONSE, RESP_FAILED_ERROR);
+                    if (mIsToast) {
+                        Toast.makeText(VideoWallpaper.this, "无法播放该文件", Toast.LENGTH_SHORT).show();
+                    }
                 }
             } else {
-                Toast.makeText(VideoWallpaper.this, "请稍后再试", Toast.LENGTH_SHORT).show();
+                sendResp(EXTRA_RESPONSE, RESP_FAILED_INIT);
+                if (mIsToast) {
+                    Toast.makeText(VideoWallpaper.this, "初始化失败", Toast.LENGTH_SHORT).show();
+                }
             }
         }
 
@@ -130,7 +165,7 @@ public class VideoWallpaper extends WallpaperService {
         public void onCreate(SurfaceHolder surfaceHolder) {
             super.onCreate(surfaceHolder);
             IntentFilter filter = new IntentFilter();
-            filter.addAction(ACTION_VIDEO_ENGINE);
+            filter.addAction(ACTION_VIDEO_REQUEST);
             registerReceiver(mVideoReceive, filter);
         }
 
@@ -144,7 +179,7 @@ public class VideoWallpaper extends WallpaperService {
             super.onSurfaceCreated(holder);
             mHolder = holder;
             if (mFile != null) {
-                startVideo(mFile,mIsVolume);
+                startVideo(mFile, mIsVolume);
             }
         }
 

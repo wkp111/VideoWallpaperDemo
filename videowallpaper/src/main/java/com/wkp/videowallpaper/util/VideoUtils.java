@@ -8,6 +8,7 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 
 import com.wkp.videowallpaper.bean.VideoInfo;
+import com.wkp.videowallpaper.receive.VideoRespReceive;
 import com.wkp.videowallpaper.service.VideoWallpaper;
 
 import java.io.File;
@@ -17,9 +18,11 @@ import java.util.List;
 /**
  * 获取本地视频的工具类
  */
+@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class VideoUtils {
     public static final long DEFAULT_SEND_TIME = 300;
     public static long sSendTime = DEFAULT_SEND_TIME;
+    public static VideoRespReceive sReceive = new VideoRespReceive();
     /**
      * 获取视频的缩略图
      * 先通过ThumbnailUtils来创建一个视频的缩略图，然后再利用ThumbnailUtils来生成指定大小的缩略图。
@@ -100,22 +103,57 @@ public class VideoUtils {
     /**
      * 设置视频桌面
      * @param context
-     * @param file
-     * @param isVolume
+     * @param file      视频文件
+     * @param isVolume  是否开启声音
+     * @param isToast   是否Toast提示
      */
-    public static void setVideoWallpaper(final Context context, final File file, final boolean isVolume) {
+    public static void setVideoWallpaper(final Context context, final File file, final boolean isVolume,final boolean isToast) {
         context.startService(new Intent(context, VideoWallpaper.class));
         CommonUtils.getHandler().postDelayed(new Runnable() {
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
             @Override
             public void run() {
                 Intent intent = new Intent();
-                intent.setAction(VideoWallpaper.ACTION_VIDEO_ENGINE);
+                intent.setAction(VideoWallpaper.ACTION_VIDEO_REQUEST);
                 intent.putExtra(VideoWallpaper.EXTRA_FILE,file);
                 intent.putExtra(VideoWallpaper.EXTRA_VOLUME,isVolume);
+                intent.putExtra(VideoWallpaper.EXTRA_TOAST,isToast);
                 context.sendBroadcast(intent);
             }
         },sSendTime < DEFAULT_SEND_TIME ? DEFAULT_SEND_TIME : sSendTime);
+    }
+
+    /**
+     * 设置视频桌面
+     * @param context
+     * @param file
+     * @param isVolume
+     */
+    public static void setVideoWallpaper(final Context context, final File file, final boolean isVolume) {
+        setVideoWallpaper(context,file,isVolume,false);
+    }
+
+    /**
+     * 添加设置视频桌面响应监听
+     * @param listener
+     */
+    public static void addOnVideoWallpaperRespListener(VideoRespReceive.OnVideoWallpaperRespListener listener) {
+        sReceive.addOnVideoWallpaperRespListener(listener);
+    }
+
+    /**
+     * 移除设置视频桌面响应监听
+     * @param listener
+     */
+    public static void removeOnVideoWallpaperRespListener(VideoRespReceive.OnVideoWallpaperRespListener listener) {
+        sReceive.removeOnVideoWallpaperRespListener(listener);
+    }
+
+    /**
+     * 移除所有设置视频桌面响应监听
+     */
+    public static void removeAllOnVideoWallpaperRespListener() {
+        sReceive.removeAllOnVideoWallpaperRespListener();
     }
 
 }

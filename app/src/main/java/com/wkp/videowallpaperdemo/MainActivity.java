@@ -6,11 +6,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -26,6 +28,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.wkp.runtimepermissions.callback.PermissionCallBack;
 import com.wkp.runtimepermissions.util.RuntimePermissionUtil;
 import com.wkp.videowallpaper.bean.VideoInfo;
+import com.wkp.videowallpaper.receive.VideoRespReceive;
 import com.wkp.videowallpaper.util.VideoUtils;
 
 import java.io.File;
@@ -58,6 +61,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        //添加设置视频桌面响应监听（回调有重复调用的情况）
+        VideoUtils.addOnVideoWallpaperRespListener(onVideoWallpaperRespListener);
+    }
+
+    //设置视频桌面响应监听
+    private VideoRespReceive.OnVideoWallpaperRespListener onVideoWallpaperRespListener = new VideoRespReceive.OnVideoWallpaperRespListener() {
+        @Override
+        public void onVideoWallpaperResp(@Nullable File file, int respState) {
+            //file对应设置的视频文件，可能为空； respState为响应码，对应如下：
+            // public static final int RESP_SUCCESS = 100;          桌面设置成功
+            // public static final int RESP_FAILED_NULL = 101;      视频文件为空
+            // public static final int RESP_FAILED_ERROR = 102;     视频播放异常
+            // public static final int RESP_FAILED_INIT = 103;      引擎无播放控件
+            if (file != null) {
+                Log.d("MainActivity", file.getName());
+            }
+            Log.d("MainActivity", "respState:" + respState);
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //注意：为了防止内存泄露，一定要记得移除监听
+        VideoUtils.removeOnVideoWallpaperRespListener(onVideoWallpaperRespListener);
+//        VideoUtils.removeAllOnVideoWallpaperRespListener();
     }
 
     /**
@@ -66,7 +96,9 @@ public class MainActivity extends AppCompatActivity {
      * @param isVolume
      */
     private void sendReceive(final File file, final boolean isVolume) {
-        VideoUtils.setVideoWallpaper(this,file,isVolume);
+        //设置视频桌面（默认Toast为false）
+//        VideoUtils.setVideoWallpaper(this,file,isVolume);
+        VideoUtils.setVideoWallpaper(this,file,isVolume,true);
     }
 
     /**
