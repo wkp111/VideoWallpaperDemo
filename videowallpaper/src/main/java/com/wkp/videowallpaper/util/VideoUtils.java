@@ -20,9 +20,9 @@ import java.util.List;
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class VideoUtils {
-    public static final long DEFAULT_SEND_TIME = 300;
+    private static final long DEFAULT_SEND_TIME = 300;
     public static long sSendTime = DEFAULT_SEND_TIME;
-    public static VideoRespReceive sReceive = new VideoRespReceive();
+    private static VideoRespReceive sReceive = new VideoRespReceive();
     /**
      * 获取视频的缩略图
      * 先通过ThumbnailUtils来创建一个视频的缩略图，然后再利用ThumbnailUtils来生成指定大小的缩略图。

@@ -61,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
         //添加设置视频桌面响应监听（回调有重复调用的情况）
         VideoUtils.addOnVideoWallpaperRespListener(onVideoWallpaperRespListener);
     }
@@ -96,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
      * @param isVolume
      */
     private void sendReceive(final File file, final boolean isVolume) {
+        //控制延迟时间（当壁纸界面为黑屏时可以适当将其设置长一点，看手机好坏了，一般一秒(1000)应该够了）
+        VideoUtils.sSendTime = 800;
         //设置视频桌面（默认Toast为false）
 //        VideoUtils.setVideoWallpaper(this,file,isVolume);
         VideoUtils.setVideoWallpaper(this,file,isVolume,true);
